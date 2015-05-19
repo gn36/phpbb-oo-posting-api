@@ -1,0 +1,32 @@
+{
+	"name": "gn36/functions_post_oo",
+	"type": "phpbb-extension",
+	"description": "Helper extension for creating/modifying posts, topics and PMs in phpBB. Does not provide any functionality by itself, but provides helper functions for other extensions.",
+	"homepage": "http://www.goose-necks.de/",
+	"version": "1.0.0",
+	"time": "2015-01-20",
+	"license": "GPL-2.0",
+	"authors": [
+		{
+			"name": "Martin Beckmann",
+			"email": "gn#36@phpbb.de",
+			"homepage": "http://www.phpbb.de/",
+			"role": "Developer"
+		},
+		{
+			"name": "Frank Dreyer",
+			"email": "pyramide@phpbb.de",
+			"homepage": "http://www.phpbb.de/",
+			"role": "Former Developer"
+		}
+	],
+	"require": {
+		"php": ">=5.3.3"
+	},
+	"extra": {
+		"display-name": "OO Posting API",
+		"soft-require": {
+			"phpbb/phpbb": ">=3.1.2,<3.2.*@dev"
+		}
+	}
+}
