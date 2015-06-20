@@ -3,8 +3,8 @@
 namespace gn36\functions_post_oo;
 
 include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
-include_once(__DIR__ . 'syncer' . $phpEx);
-include_once(__DIR__ . 'post' . $phpEx);
+include_once(__DIR__ . '/syncer.' . $phpEx);
+include_once(__DIR__ . '/post.' . $phpEx);
 
 class topic
 {
@@ -250,8 +250,13 @@ class topic
 			'topic_reported' => $this->topic_reported ? 1 : 0,
 
 			// 'topic_views' => $this->topic_views,
-			'topic_replies' => $this->topic_replies,
-			'topic_replies_real' => $this->topic_replies_real,
+			'topic_posts_approved' => $this->topic_posts_approved,
+			'topic_posts_unapproved' => $this->topic_posts_unapproved,
+			'topic_posts_softdeleted' => $this->topic_posts_softdeleted,
+			'topic_delete_time' => $this->topic_delete_time,
+			'topic_delete_reason' => $this->topic_delete_reason,
+			'topic_delete_user' => $this->topic_delete_user,
+
 			'topic_status' => $this->topic_status,
 			'topic_moved_id' => $this->topic_moved_id,
 			'topic_type' => $this->topic_type,
@@ -259,6 +264,19 @@ class topic
 			'topic_title' => $this->topic_title,
 			'topic_time' => $this->topic_time,
 			'topic_poster' => $this->topic_poster,
+
+			'topic_first_post_id' => $this->topic_first_post_id,
+			'topic_first_poster_name' => $this->topic_first_poster_name,
+			'topic_first_poster_color' => $this->topic_first_poster_colour,
+
+			'topic_last_post_id' => $this->topic_last_post_id,
+			'topic_last_poster_id' => $this->topic_last_poster_id,
+			'topic_last_poster_name' => $this->topic_last_poster_name,
+			'topic_last_poster_colour' => $this->topic_last_poster_colour,
+			'topic_last_post_subject' => $this->topic_last_post_subject,
+			'topic_last_post_time' => $this->topic_last_post_time,
+			'topic_last_view_time' => $this->topic_last_view_time,
+
 			'topic_bumped' => $this->topic_bumped ? 1 : 0,
 			'topic_bumper' => $this->topic_bumper,
 			'poll_title' => $this->poll_title,

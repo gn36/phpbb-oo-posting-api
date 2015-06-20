@@ -110,7 +110,7 @@ class syncer
 				$this->set('topic', $topic_id, array(
 					'topic_time'				=> $row['post_time'],
 					'topic_poster'				=> $row['poster_id'],
-					'topic_visibility'			=> $row['post_visibility'],
+					//'topic_visibility'			=> $row['post_visibility'],
 					'topic_first_post_id'		=> $row['post_id'],
 					'topic_first_poster_name'	=> ($row['poster_id'] == ANONYMOUS) ? $row['post_username'] : $row['username'],
 					'topic_first_poster_colour'	=> $row['user_colour']

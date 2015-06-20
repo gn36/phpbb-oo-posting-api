@@ -3,8 +3,8 @@
 namespace gn36\functions_post_oo;
 
 include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
-include_once(__DIR__ . 'syncer' . $phpEx);
-include_once(__DIR__ . 'topic' . $phpEx);
+include_once(__DIR__ . '/syncer.' . $phpEx);
+include_once(__DIR__ . '/topic.' . $phpEx);
 
 class post
 {
