@@ -5,8 +5,9 @@ namespace gn36\functions_post_oo;
 include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
 include_once(__DIR__ . '/syncer.' . $phpEx);
 include_once(__DIR__ . '/topic.' . $phpEx);
+include_once(__DIR__ . '/posting_base.' . $phpEx);
 
-class post
+class post extends posting_base
 {
 	var $post_id;
 	var $topic_id;
@@ -26,6 +27,7 @@ class post
 	var $enable_smilies = 1;
 	var $enable_magic_url = 1;
 	var $enable_sig = 1;
+	var $enable_urls = 1;
 
 	var $post_subject = '';
 	var $post_text = '';
@@ -40,7 +42,7 @@ class post
 	var $post_delete_reason = '';
 	var $post_delete_user = 0;
 
-	var $_topic;
+	protected $_topic;
 
 	var $post_attachment = 0;
 	var $attachments = array();
@@ -192,32 +194,6 @@ class post
 		return $this->_topic;
 	}
 
-	/** sets the following variables based on the permissions of $this->poster_id:
-	 * post_postcount, post_approved
-	 * enable_bbcode, enable_smilies, enable_magic_url, enable_sig
-	 * img_status, flash_status, quote_status
-	 * by default (if you never call this function) all variables are set to 1 (allowed)
-	 * note that this does not check whether the user can post at all - use validate() for that.
-	 * @todo */
-	function apply_permissions()
-	{
-		//TODO
-	}
-
-	/**checks if $this->poster_id has the permissions required to submit this post.
-	 * note that calling this does not change the behaviour of submit()*/
-	function validate()
-	{
-		// ?? $this->apply_permissions();
-		//TODO
-	}
-
-	/**returns the html representation of this post*/
-	function display_format()
-	{
-		//TODO
-	}
-
 	/**
 	 * Merge post into topic. Use move_posts directly for merging multiple posts
 	 * @param integer $topic_id
@@ -271,12 +247,13 @@ class post
 			'enable_bbcode'		=> $this->enable_bbcode ? 1 : 0,
 			'enable_smilies'	=> $this->enable_smilies ? 1 : 0,
 			'enable_magic_url'	=> $this->enable_magic_url ? 1 : 0,
+			'enable_urls' 		=> $this->enable_urls ? 1 : 0,
 			'enable_sig'		=> $this->enable_sig ? 1 : 0,
 			'post_subject'		=> $this->post_subject,
 			'bbcode_bitfield'	=> 0,
 			'bbcode_uid'		=> '',
-			'post_text'			=> $this->post_text,
-			'post_checksum'		=> md5($this->post_text),
+			//'post_text'			=> $this->post_text,
+			//'post_checksum'		=> md5($this->post_text),
 			//'post_attachment'	=> $this->post_attachment ? 1 : 0,
 			'post_edit_time'	=> $this->post_edit_time,
 			'post_edit_reason'	=> $this->post_edit_reason,
@@ -286,320 +263,45 @@ class post
 			'post_delete_time' 	=> $this->post_delete_time,
 			'post_delete_reason' => $this->post_delete_reason,
 			'post_delete_user' 	=> $this->post_delete_user,
+
+			'message' 			=> $this->post_text,
+			'message_md5' 		=> md5($this->post_text),
+
+			'enable_indexing'	=> $this->enable_indexing,
+			'notify_set'		=> $this->notify_set,
+			'notify'			=> $this->notify,
+
+			'topic_title' => $this->post_subject,
+
 		);
 
 		$flags = '';
-		generate_text_for_storage($sql_data['post_text'], $sql_data['bbcode_uid'], $sql_data['bbcode_bitfield'], $flags, $this->enable_bbcode, $this->enable_magic_url, $this->enable_smilies);
+		generate_text_for_storage($sql_data['message'], $sql_data['bbcode_uid'], $sql_data['bbcode_bitfield'], $flags, $this->enable_bbcode, $this->enable_magic_url, $this->enable_smilies);
 
+		$topic_type = isset($this->_topic) ? $this->_topic->topic_type : POST_NORMAL;
+
+		// Post:
 		if($this->post_id && $this->topic_id)
 		{
-			//edit
-			$sql = "SELECT p.*, t.topic_first_post_id, t.topic_last_post_id, t.topic_approved, t.topic_replies
-					FROM " . POSTS_TABLE . " p
-					LEFT JOIN " . TOPICS_TABLE . " t ON (t.topic_id = p.topic_id)
-					WHERE p.post_id=" . intval($this->post_id);
-			//$sql = "SELECT * FROM " . POSTS_TABLE . " WHERE post_id=" . intval($this->post_id);
-			$result = $db->sql_query($sql);
-			$post_data = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
-
-			if(!$post_data)
-			{
-				trigger_error("post_id={$this->post_id}, but that post does not exist", E_USER_ERROR);
-			}
-
-			//check first/last post
-			$is_first_post = ($post_data['post_id'] == $post_data['topic_first_post_id']);
-			$is_last_post = ($post_data['post_id'] == $post_data['topic_last_post_id']);
-
-			$db->sql_transaction('begin');
-
-			$sql = "UPDATE " . POSTS_TABLE . " SET " . $db->sql_build_array('UPDATE', $sql_data) . " WHERE post_id=" . $this->post_id;
-			$db->sql_query($sql);
-
-			if($this->topic_id != $post_data['topic_id'])
-			{
-				//merge into new topic
-				//get new topic's forum id and first/last post time
-				$sql = "SELECT forum_id, topic_time, topic_last_post_time
-						FROM " . TOPICS_TABLE . "
-						WHERE topic_id = {$this->topic_id}";
-				$result = $db->sql_query($sql);
-				$new_topic_data = $db->sql_fetchrow($result);
-				if(!$new_topic_data)
-				{
-					trigger_error("attempted to merge post {$this->post_id} into topic {$this->topic_id}, but that topic does not exist", E_USER_ERROR);
-				}
-
-				//sync forum_posts
-				//TODO
-				if($new_topic_data['forum_id'] != $post_data['forum_id'])
-				{
-					$sync->add('forum', $post_data['forum_id'], 'forum_posts', $this->post_approved ? -1 : 0);
-					$sync->add('forum', $new_topic_data['forum_id'], 'forum_posts', $this->post_approved ? 1 : 0);
-					if($this->forum_id != $new_topic_data['forum_id'])
-					{
-						//user changed topic_id but not forum_id, so we saved the wrong one above. correct it via sync
-						$this->forum_id = $new_topic_data['forum_id'];
-						$sync->set('post', $this->post_id, 'forum_id', $this->forum_id);
-					}
-				}
-
-				//sync old topic
-				$sync->add('topic', $post_data['topic_id'], 'topic_replies', $this->post_approved ? -1 : 0);
-				$sync->add('topic', $post_data['topic_id'], 'topic_replies_real', -1);
-				$sync->check_topic_empty($post_data['topic_id']);
-
-				//sync new topic
-				$sync->add('topic', $this->topic_id, 'topic_replies', $this->post_approved ? 1 : 0);
-				$sync->add('topic', $this->topic_id, 'topic_replies_real', 1);
-
-				//sync topic_reported and topic_attachment if applicable
-				if($post_data['post_reported']) {
-					$sync->topic_reported($post_data['topic_id']);
-				}
-				if($post_data['post_attachment']) {
-					$sync->topic_attachment($post_data['topic_id']);
-				}
-				if($this->post_reported) {
-					$sync->topic_reported($this->topic_id);
-				}
-				if($this->post_attachment) {
-					$sync->topic_attachment($this->topic_id);
-				}
-
-				if($is_first_post)
-				{
-					//this was the first post in the old topic, sync it
-					$sync->topic_first_post($post_data['topic_id']);
-					$is_first_post = false; //unset since we dont know status for new topic yet
-				}
-
-				if($is_last_post)
-				{
-					//this was the last post in the old topic, sync it
-					$sync->topic_last_post($post_data['topic_id']);
-					$sync->forum_last_post($post_data['forum_id']);
-					$is_last_post = false; //unset since we dont know status for new topic yet
-				}
-
-				if($this->post_time <= $new_topic_data['topic_time'])
-				{
-					//this will be the first post in the new topic, sync it
-					$sync->topic_first_post($this->topic_id);
-					$is_first_post = true;
-				}
-				if($this->post_time >= $new_topic_data['topic_last_post_time'])
-				{
-					//this will be the last post in the new topic, sync it
-					$sync->topic_last_post($this->topic_id);
-					$sync->forum_last_post($this->topic_id);
-					$is_last_post = true;
-				}
-			}
-			elseif($is_first_post)
-			{
-				$sync->set('topic', $this->topic_id, array(
-					'icon_id'			=> $this->icon_id,
-					'topic_approved'	=> $this->post_approved,
-					'topic_title'		=> $this->post_subject,
-					'topic_poster'		=> $this->poster_id,
-					'topic_time'		=> $this->post_time
-				));
-			}
-
-
-			//check if some statistics relevant flags have been changed
-			if($this->post_approved != $post_data['post_approved'])
-			{
-				//if topic_id was changed, we've already updated it above.
-				if($this->topic_id == $post_data['topic_id'])
-				{
-					if($is_first_post)
-					{
-						//first post -> approve/disapprove whole topic if not yet done (should only happen when directly storing the post)
-						if($this->post_approved != $post_data['topic_approved'])
-						{
-							$sync->add('forum', $this->forum_id, 'forum_topics', $this->post_approved ? 1 : -1);
-							$sync->add('forum', $this->forum_id, 'forum_posts', $this->post_approved ? (1+$post_data['topic_replies']) : -(1+$post_data['topic_replies']));
-							$sync->forum_last_post($this->forum_id);
-
-							//and the total topics+posts
-							set_config('num_topics', $this->post_approved ? $config['num_topics'] + 1 : $config['num_topics'] - 1, true);
-							set_config('num_posts', $this->post_approved ? $config['num_posts'] + (1+$post_data['topic_replies']) : $config['num_posts'] - (1+$post_data['topic_replies']), true);
-						}
-					}
-					else
-					{
-						//reply
-						$sync->add('topic', $this->topic_id, 'topic_replies', $this->post_approved ? 1 : -1);
-						$sync->add('forum', $this->forum_id, 'forum_posts', $this->post_approved ? 1 : -1);
-					}
-				}
-
-				//update total posts
-				if(!$is_first_post)
-				{
-					set_config('num_posts', $this->post_approved ? $config['num_posts'] + 1 : $config['num_posts'] - 1, true);
-				}
-			}
-			/*if($this->post_postcount != $post_data['post_postcount'] && $this->poster_id != ANONYMOUS)
-			 {
-				//increase or decrease user_posts
-				$sync->add('user', $this->poster_id, 'user_posts', $this->post_approved ? 1 : -1);
-				}*/
-			if($this->poster_id != $post_data['poster_id'] || $this->post_postcount != $post_data['post_postcount'])
-			{
-				if($post_data['post_postcount'] && $post_data['poster_id'] != ANONYMOUS)
-				{
-					$sync->add('user', $post_data['poster_id'], 'user_posts', -1);
-				}
-				if($this->post_postcount && $this->poster_id != ANONYMOUS)
-				{
-					$sync->add('user', $this->poster_id, 'user_posts', 1);
-				}
-			}
-
-			if($is_first_post)
-			{
-				$sync->topic_first_post($this->topic_id);
-			}
-			if($is_last_post)
-			{
-				$sync->topic_last_post($this->topic_id);
-				$sync->forum_last_post($this->forum_id);
-			}
-
-			$this->reindex('edit', $this->post_id, $sql_data['post_text'], $this->post_subject, $this->poster_id, $this->forum_id);
-
-			$db->sql_transaction('commit');
+			// Edit
+			$mode = 'edit';
+			$sql_data['post_id'] = $this->post_id;
 		}
 		elseif($this->topic_id)
 		{
-			//reply
-			$sql = "SELECT t.*, f.forum_name
-					FROM " . TOPICS_TABLE . " t
-					LEFT JOIN " . FORUMS_TABLE . " f ON (f.forum_id = t.forum_id)
-					WHERE t.topic_id=" . intval($this->topic_id);
-			$result = $db->sql_query($sql);
-			$topic_data = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
-
-			if(!$topic_data)
-			{
-				trigger_error("topic_id={$this->topic_id}, but that topic does not exist", E_USER_ERROR);
-			}
-
-			//we need topic_id and forum_id
-			$this->forum_id = $topic_data['forum_id'];
-			$sql_data['forum_id'] = $this->forum_id;
-			$sql_data['topic_id'] = $this->topic_id;
-
-			//make sure we have a post_subject (empty subjects are bad for e.g. approving)
-			if($this->post_subject == '')
-			{
-				$this->post_subject = 'Re: ' . $topic_data['topic_title'];
-			}
-
-			$db->sql_transaction('begin');
-
-			//insert post
-			$sql = "INSERT INTO " . POSTS_TABLE . " " . $db->sql_build_array('INSERT', $sql_data);
-			$db->sql_query($sql);
-			$this->post_id = $db->sql_nextid();
-
-			//update topic
-			if(!$sync->new_topic_flag)
-			{
-				$sync->add('topic', $this->topic_id, 'topic_replies', $this->post_approved ? 1 : 0);
-				$sync->add('topic', $this->topic_id, 'topic_replies_real', 1);
-				$sync->set('topic', $this->topic_id, 'topic_bumped', 0);
-				$sync->set('topic', $this->topic_id, 'topic_bumper', 0);
-			}
-			else
-			{
-				$sync->topic_first_post($this->topic_id);
-				$sync->new_topic_flag = false;
-			}
-			$sync->topic_last_post($this->topic_id);
-
-			//update forum
-			if($this->forum_id != 0)
-			{
-				$sync->add('forum', $this->forum_id, 'forum_posts', $this->post_approved ? 1 : 0);
-				$sync->forum_last_post($this->forum_id);
-			}
-
-
-			if($this->post_postcount)
-			{
-				//increase user_posts...
-				$sync->add('user', $this->poster_id, 'user_posts', 1);
-			}
-			if($this->post_approved)
-			{
-				//...and total posts
-				set_config('num_posts', $config['num_posts'] + 1, true);
-			}
-
-			$this->reindex('reply', $this->post_id, $sql_data['post_text'], $this->post_subject, $this->poster_id, $this->forum_id);
-
-			$db->sql_transaction('commit');
-
-			// Mark this topic as posted to
-			markread('post', $this->forum_id, $this->topic_id, $this->post_time, $this->poster_id);
-
-			// Mark this topic as read
-			// We do not use post_time here, this is intended (post_time can have a date in the past if editing a message)
-			markread('topic', $this->forum_id, $this->topic_id, time());
-
-			//
-			if ($config['load_db_lastread'] && $user->data['is_registered'])
-			{
-				$sql = 'SELECT mark_time
-					FROM ' . FORUMS_TRACK_TABLE . '
-					WHERE user_id = ' . $user->data['user_id'] . '
-						AND forum_id = ' . $this->forum_id;
-				$result = $db->sql_query($sql);
-				$f_mark_time = (int) $db->sql_fetchfield('mark_time');
-				$db->sql_freeresult($result);
-			}
-			else if ($config['load_anon_lastread'] || $user->data['is_registered'])
-			{
-				$f_mark_time = false;
-			}
-
-			if (($config['load_db_lastread'] && $user->data['is_registered']) || $config['load_anon_lastread'] || $user->data['is_registered'])
-			{
-				// Update forum info
-				$sql = 'SELECT forum_last_post_time
-					FROM ' . FORUMS_TABLE . '
-					WHERE forum_id = ' . $this->forum_id;
-				$result = $db->sql_query($sql);
-				$forum_last_post_time = (int) $db->sql_fetchfield('forum_last_post_time');
-				$db->sql_freeresult($result);
-
-				update_forum_tracking_info($this->forum_id, $forum_last_post_time, $f_mark_time, false);
-			}
-
-			// Send Notifications
-			user_notification('reply', $this->post_subject, $topic_data['topic_title'], $topic_data['forum_name'], $this->forum_id, $this->topic_id, $this->post_id);
+			// Reply
+			$mode = 'reply';
 		}
 		else
 		{
-			//new topic
-			$this->_topic = topic::from_post($this);
-			$this->_topic->submit(true);
-
-			//PHP4 Compatibility:
-			if(version_compare(PHP_VERSION, '5.0.0', '<'))
-			{
-				$this->topic_id = $this->_topic->topic_id;
-				$this->post_id = $this->_topic->topic_first_post_id;
-			}
-			$exec_sync = false;
+			// New Topic
+			$mode = 'post';
 		}
+		$poll = array();
 
+		$this->submit_post($mode, $this->post_subject, $this->post_username, $topic_type, $poll, $sql_data);
+
+		//TODO
 		foreach($this->attachments as $attachment)
 		{
 			$attachment->post_msg_id = $this->post_id;
@@ -687,4 +389,6 @@ class post
 			markread('topic', $this->forum_id, $this->topic_id, time());
 		}
 	}
+
+
 }

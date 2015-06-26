@@ -6,7 +6,7 @@ include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
 include_once(__DIR__ . '/syncer.' . $phpEx);
 include_once(__DIR__ . '/post.' . $phpEx);
 
-class topic
+class topic extends posting_base
 {
 
 	var $topic_id;
