@@ -626,7 +626,7 @@ class post
 	{
 		global $config, $phpbb_root_path, $phpEx;
 		// Select the search method and do some additional checks to ensure it can actually be utilised
-		$search_type = basename($config['search_type']);
+		$search_type =  basename($config['search_type']);
 
 		if (!file_exists($phpbb_root_path . 'phpbb/search/' . $search_type . '.' . $phpEx))
 		{
@@ -634,6 +634,7 @@ class post
 		}
 
 		require_once("{$phpbb_root_path}phpbb/search/$search_type.$phpEx");
+		$search_type = "\\phpbb\\search\\" . $search_type;
 
 		$error = false;
 		$search = new $search_type($error);

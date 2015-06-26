@@ -185,7 +185,7 @@ class topic
 	 * @param array $post
 	 * @return boolean|\gn36\functions_post_oo\topic
 	 */
-	static function from_post($post)
+	static function from_post(\gn36\functions_post_oo\post $post)
 	{
 		if ($post->topic_id != NULL)
 		{
@@ -209,6 +209,16 @@ class topic
 		$topic->topic_delete_reason = $post->post_delete_reason;
 		$topic->topic_delete_time = $post->post_delete_time;
 		$topic->topic_reported = $post->post_reported;
+		$topic->topic_first_post_id = $post->post_id;
+		$topic->topic_first_poster_colour = '';
+		$topic->topic_first_poster_name = '';
+		$topic->topic_last_post_subject = $post->post_subject;
+		$topic->topic_last_post_time = $post->post_time;
+		$topic->topic_last_poster_colour = '';
+		$topic->topic_last_poster_id = $post->poster_id;
+		$topic->topic_last_poster_name = '';
+		$topic->topic_last_view_time = time();
+
 
 		$topic->posts[] = &$post;
 		return $topic;
@@ -217,7 +227,7 @@ class topic
 	// TODO
 	function submit($submit_posts = true)
 	{
-		global $config, $db, $auth, $user;
+		global $config, $db, $auth, $user, $phpbb_container;
 
 		if (! $this->topic_id && count($this->posts) == 0)
 		{
@@ -267,7 +277,7 @@ class topic
 
 			'topic_first_post_id' => $this->topic_first_post_id,
 			'topic_first_poster_name' => $this->topic_first_poster_name,
-			'topic_first_poster_color' => $this->topic_first_poster_colour,
+			'topic_first_poster_colour' => $this->topic_first_poster_colour,
 
 			'topic_last_post_id' => $this->topic_last_post_id,
 			'topic_last_poster_id' => $this->topic_last_poster_id,
@@ -383,6 +393,9 @@ class topic
 		{
 			// new topic
 			$sql_data['forum_id'] = $this->forum_id;
+			$sql_data['topic_first_post_id'] = 0;
+
+			$sql_data['topic_last_post_id'] = 0;
 
 			$sql = 'INSERT INTO ' . TOPICS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_data);
 
@@ -414,7 +427,7 @@ class topic
 			$phpbb_content_visibility->set_topic_visibility($this->topic_visibility, $this->topic_id, $this->forum_id, $this->topic_delete_user, $this->topic_delete_time, $this->topic_delete_reason);
 
 			// total topics
-			if ($this->topic_approved)
+			if ($this->topic_visibility == ITEM_APPROVED)
 			{
 				set_config('num_topics', $config['num_topics'] + 1, true);
 			}
@@ -506,9 +519,9 @@ class topic
 				{
 					$first_post->poster_id = $this->topic_poster;
 				}
-				if (! $this->topic_approved)
+				if ($this->topic_visibility != ITEM_APPROVED)
 				{
-					$first_post->post_approved = 0;
+					$first_post->post_visibility = ITEM_UNAPPROVED;
 				}
 			}
 			elseif ($topic_data && $this->topic_first_post_id != 0)
@@ -552,7 +565,7 @@ class topic
 
 				// if(!$post->poster_id) $post->poster_id = $this->topic_poster;
 
-				$post->_submit($sync);
+				$post->submit_without_sync($sync);
 			}
 		}
 		else
