@@ -1,6 +1,5 @@
 {
 	"name": "gn36/phpbb-oo-posting-api",
-	"type": "phpbb-extension",
 	"description": "Helper classes for creating/modifying posts, topics and PMs in phpBB to be added to vendor by other extensions.",
 	"homepage": "http://phpbb.gn36.de/",
 	"version": "1.0.0-dev",
@@ -32,11 +31,6 @@
 		"display-name": "OO Posting API",
 		"soft-require": {
 			"phpbb/phpbb": ">=3.1.2,<3.2.*@dev"
-		},
-		"version-check": {
-			"host": "phpbb.gn36.de",
-			"directory": "/extensions/vinfo",
-			"filename": "phpbb-ext-ooapi.json"
 		}
 	}
 }
