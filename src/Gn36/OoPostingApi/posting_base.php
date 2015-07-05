@@ -1,5 +1,5 @@
 <?php
-namespace gn36\functions_post_oo;
+namespace Gn36\OoPostingApi;
 
 class posting_base
 {
@@ -8,6 +8,8 @@ class posting_base
 	var $notify_set 		= 0;
 	var $notify 			= 0;
 
+	//TODO: It would probably be better to replace this by the default phpBB function and doing some tricks with $user and $auth
+	// This is currently a modified copy of the phpBB function so it allows posting as a different user and ignores some permissions.
 	protected function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $update_message = true, $update_search_index = true)
 	{
 		global $db, $user, $config, $auth, $phpEx, $template, $phpbb_root_path, $phpbb_container, $phpbb_dispatcher;

@@ -1,6 +1,6 @@
 <?php
 
-namespace gn36\functions_post_oo;
+namespace Gn36\OoPostingApi;
 
 include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
 include_once($phpbb_root_path . 'includes/functions_privmsgs.' . $phpEx);
@@ -52,7 +52,12 @@ class privmsg
 
 	}
 
-	/**initializes and returns a new privmsg object as reply to the message with msg_id $msg_id*/
+	/**
+	 * initializes and returns a new privmsg object as reply to the message with msg_id $msg_id
+	 * @param int $msg_id
+	 * @param boolean $quote
+	 * @return \Gn36\OoPostingApi\privmsg
+	 **/
 	static function reply_to($msg_id, $quote = true)
 	{
 		global $db;
@@ -137,6 +142,9 @@ class privmsg
 		trigger_error('not yet implemented', E_USER_ERROR);
 	}
 
+	/**
+	 * Submits the pm to the database.
+	 */
 	function submit()
 	{
 		global $user, $db;

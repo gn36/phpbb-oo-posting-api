@@ -1,11 +1,14 @@
 <?php
 
-namespace gn36\functions_post_oo;
+namespace Gn36\OoPostingApi;
 
 include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
-include_once(__DIR__ . '/syncer.' . $phpEx);
+//include_once(__DIR__ . '/syncer.' . $phpEx);
 include_once(__DIR__ . '/post.' . $phpEx);
+include_once(__DIR__ . '/posting_base.' . $phpEx);
 
+//TODO: Warning: This class is not yet finished! Please use Gn36\OoPostingApi\post instead for now. Should work for most stuff
+// This will be worked upon with low priority.
 class topic extends posting_base
 {
 
@@ -99,7 +102,7 @@ class topic extends posting_base
 	 *
 	 * @param int $topic_id
 	 * @param boolean $load_posts Whether to load the posts as well
-	 * @return boolean|\gn36\functions_post_oo\topic
+	 * @return boolean|\Gn36\OoPostingApi\topic
 	 */
 	static function get($topic_id, $load_posts = false)
 	{
@@ -183,9 +186,9 @@ class topic extends posting_base
 	/**
 	 *
 	 * @param array $post
-	 * @return boolean|\gn36\functions_post_oo\topic
+	 * @return boolean|\Gn36\OoPostingApi\topic
 	 */
-	static function from_post(\gn36\functions_post_oo\post $post)
+	static function from_post(post $post)
 	{
 		if ($post->topic_id != NULL)
 		{

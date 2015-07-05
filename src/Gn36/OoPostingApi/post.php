@@ -1,9 +1,8 @@
 <?php
 
-namespace gn36\functions_post_oo;
+namespace Gn36\OoPostingApi;
 
 include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
-include_once(__DIR__ . '/syncer.' . $phpEx);
 include_once(__DIR__ . '/topic.' . $phpEx);
 include_once(__DIR__ . '/posting_base.' . $phpEx);
 
@@ -42,6 +41,7 @@ class post extends posting_base
 	var $post_delete_reason = '';
 	var $post_delete_user = 0;
 
+	/** @var Gn36\OoPostingApi\topic */
 	protected $_topic;
 
 	var $post_attachment = 0;
@@ -56,14 +56,12 @@ class post extends posting_base
 	/**
 	 * Load post from database. Returns false, if the post doesn't exist
 	 * @param int $post_id
-	 * @return boolean|\gn36\functions_post_oo\post
+	 * @return boolean|Gn36\OoPostingApi\post
 	 */
 	static function get($post_id)
 	{
 		global $db;
-		//$sql = "SELECT p.*, t.topic_first_post_id, t.topic_last_post_id
-		//		FROM " . POSTS_TABLE . " p, " . TOPICS_TABLE . " t
-		//		WHERE p.post_id=" . intval($this->post_id) . " AND t.topic_id = p.topic_id";
+
 		$sql = "SELECT * FROM " . POSTS_TABLE . " WHERE post_id=" . intval($post_id);
 		$result = $db->sql_query($sql);
 		$post_data = $db->sql_fetchrow($result);
@@ -83,7 +81,7 @@ class post extends posting_base
 	 * Generate post from array data. Data is assumed to be loaded from database, thus the message is decoded.
 	 *
 	 * @param array $post_data
-	 * @return \gn36\functions_post_oo\post
+	 * @return Gn36\OoPostingApi\post
 	 */
 	static function from_array($post_data)
 	{
@@ -126,10 +124,6 @@ class post extends posting_base
 		$post->post_delete_reason = $post_data['post_delete_reason'];
 		$post->post_delete_time = $post_data['post_delete_time'];
 		$post->post_delete_user = $post_data['post_delete_user'];
-
-		//check first/last post
-		//$this->_is_first_post = ($post_data['post_id'] == $post_data['topic_first_post_id']);
-		//$this->_is_last_post = ($post_data['post_id'] == $post_data['topic_last_post_id']);
 
 		//parse message
 		decode_message($post_data['post_text'], $post_data['bbcode_uid']);
@@ -210,15 +204,14 @@ class post extends posting_base
 	 */
 	function submit()
 	{
-		$sync = new syncer();
-		$this->submit_without_sync($sync);
-		$sync->execute();
+		$this->submit_without_sync();
 	}
 
-	/**create/update this post in the database
-	 * @param $sync used internally by topic->submit() */
-	//TODO
-	function submit_without_sync(\gn36\functions_post_oo\syncer &$sync)
+	/**
+	 * Submit the post to database - contrary to naming, this will sync.
+	 *
+	 */
+	function submit_without_sync($sync_not_needed = null)
 	{
 		global $config, $db, $auth, $user;
 
@@ -286,6 +279,27 @@ class post extends posting_base
 			// Edit
 			$mode = 'edit';
 			$sql_data['post_id'] = $this->post_id;
+			// TODO: We need more data on topic_posts_approved, topic_posts_unapproved, topic_posts_softdeleted, topic_first_post_id, topic_last_post_id
+			// This is required by submit_post currently
+			// Somewhere it also needs forum_name in $data for the notifications
+			if($this->_topic == null)
+			{
+				$this->_topic = topic::from_post($this);
+			}
+
+			$sql = 'SELECT forum_name FROM ' . FORUMS_TABLE . ' WHERE forum_id = ' . (int) $this->forum_id;
+			$result = $db->sql_query($sql, 48600);
+			$forum_name = $db->sql_fetchfield('forum_name', false, $result);
+			$db->sql_freeresult($result);
+
+			$sql_data = array_merge($sql_data, array(
+				'topic_posts_approved' 		=> $this->_topic->topic_posts_approved,
+				'topic_posts_unapproved' 	=> $this->_topic->topic_posts_unapproved,
+				'topic_posts_softdeleted' 	=> $this->_topic->topic_posts_softdeleted,
+				'topic_first_post_id'		=> $this->_topic->topic_first_post_id,
+				'topic_last_post_id'		=> $this->_topic->topic_last_post_id,
+				'forum_name'				=> $forum_name,
+			));
 		}
 		elseif($this->topic_id)
 		{

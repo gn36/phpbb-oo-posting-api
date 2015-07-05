@@ -1,8 +1,8 @@
 {
-	"name": "gn36/functions_post_oo",
+	"name": "gn36/phpbb-oo-posting-api",
 	"type": "phpbb-extension",
-	"description": "Helper extension for creating/modifying posts, topics and PMs in phpBB. Does not provide any functionality by itself, but provides helper functions for other extensions.",
-	"homepage": "http://www.goose-necks.de/",
+	"description": "Helper classes for creating/modifying posts, topics and PMs in phpBB to be added to vendor by other extensions.",
+	"homepage": "http://phpbb.gn36.de/",
 	"version": "1.0.0-dev",
 	"time": "2015-01-20",
 	"license": "GPL-2.0",
@@ -23,6 +23,11 @@
 	"require": {
 		"php": ">=5.3.3"
 	},
+	"autoload": {
+		"classmap": [
+			"src/"
+		]
+	}
 	"extra": {
 		"display-name": "OO Posting API",
 		"soft-require": {

@@ -1,6 +1,6 @@
 <?php
 
-namespace gn36\functions_post_oo;
+namespace Gn36\OoPostingApi;
 
 class attachment
 {
