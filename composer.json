@@ -27,7 +27,7 @@
 		"classmap": [
 			"src/"
 		]
-	}
+	},
 	"extra": {
 		"display-name": "OO Posting API",
 		"soft-require": {
