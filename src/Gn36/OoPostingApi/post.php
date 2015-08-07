@@ -118,7 +118,10 @@ class post extends posting_base
 		$post->enable_sig = $post_data['enable_sig'];
 
 		$post->post_subject = $post_data['post_subject'];
-		$post->post_attachment = $post_data['post_attachment'];
+		if(isset($post_data['post_attachment']))
+		{
+			$post->post_attachment = $post_data['post_attachment'];
+		}
 
 		$post->post_edit_time = $post_data['post_edit_time'];
 		$post->post_edit_reason = $post_data['post_edit_reason'];
@@ -335,8 +338,11 @@ class post extends posting_base
 
 		$post_data = $this->submit_post($mode, $this->post_subject, $this->post_username, $topic_type, $poll, $sql_data);
 
-		// Re-Read all the post data so we have correct post_id, forum_id etc.
-		$this->from_array($post_data);
+
+		// Re-Read topic_id and post_id:
+		$this->topic_id = $post_data['topic_id'];
+		$this->post_id  = $post_data['post_id'];
+		echo "ich bin richtig!!!";
 
 		//TODO
 		foreach($this->attachments as $attachment)
