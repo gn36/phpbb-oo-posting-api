@@ -317,7 +317,10 @@ class post extends posting_base
 		}
 		$poll = array();
 
-		$this->submit_post($mode, $this->post_subject, $this->post_username, $topic_type, $poll, $sql_data);
+		$post_data = $this->submit_post($mode, $this->post_subject, $this->post_username, $topic_type, $poll, $sql_data);
+
+		// Re-Read all the post data so we have correct post_id, forum_id etc.
+		$this->from_array($post_data);
 
 		//TODO
 		foreach($this->attachments as $attachment)

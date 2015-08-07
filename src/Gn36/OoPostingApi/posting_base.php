@@ -976,7 +976,7 @@ class posting_base
 		);
 		extract($phpbb_dispatcher->trigger_event('core.submit_post_end', compact($vars)));
 
-		return $url;
+		return $data;
 	}
 
 	protected function get_userdata($user_id)
