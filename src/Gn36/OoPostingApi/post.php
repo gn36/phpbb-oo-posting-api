@@ -277,6 +277,22 @@ class post extends posting_base
 
 		$topic_type = isset($this->_topic) ? $this->_topic->topic_type : POST_NORMAL;
 
+		if($this->topic_id && !$this->forum_id)
+		{
+			$sql = 'SELECT forum_id FROM ' . TOPICS_TABLE . ' WHERE topic_id = ' . $this->topic_id;
+			$result = $db->sql_query($sql);
+			$this->forum_id = $db->sql_fetchfield('forum_id');
+			$db->sql_freeresult($result);
+			if(!$this->forum_id)
+			{
+				throw(new \phpbb\exception\runtime_exception('TOPIC_NOT_EXIST'));
+			}
+		}
+		elseif(!$this->forum_id)
+		{
+			throw(new \phpbb\exception\runtime_exception('Neither topic_id nor forum_id given. Post cannot be created.'));
+		}
+
 		// Post:
 		if($this->post_id && $this->topic_id)
 		{
