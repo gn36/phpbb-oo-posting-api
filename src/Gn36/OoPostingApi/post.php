@@ -2,9 +2,6 @@
 
 namespace Gn36\OoPostingApi;
 
-include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
-include_once(__DIR__ . '/topic.' . $phpEx);
-include_once(__DIR__ . '/posting_base.' . $phpEx);
 
 class post extends posting_base
 {
@@ -51,6 +48,13 @@ class post extends posting_base
 	{
 		$this->topic_id = $topic_id;
 		$this->post_text = $post_text;
+
+		if(!function_exists('generate_text_from_storage'))
+		{
+			global $phpbb_root_path, $phpEx;
+
+			include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
+		}
 	}
 
 	/**

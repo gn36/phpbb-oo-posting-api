@@ -2,10 +2,7 @@
 
 namespace Gn36\OoPostingApi;
 
-include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
-//include_once(__DIR__ . '/syncer.' . $phpEx);
-include_once(__DIR__ . '/post.' . $phpEx);
-include_once(__DIR__ . '/posting_base.' . $phpEx);
+
 
 //TODO: Warning: This class is not yet finished! Please use Gn36\OoPostingApi\post instead for now. Should work for most stuff
 // This will be worked upon with low priority.
@@ -95,6 +92,10 @@ class topic extends posting_base
 	function __construct($forum_id = 0)
 	{
 		$this->forum_id = $forum_id;
+
+		global $phpbb_root_path, $phpEx;
+
+		include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
 	}
 
 	/**

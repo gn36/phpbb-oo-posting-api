@@ -2,8 +2,7 @@
 
 namespace Gn36\OoPostingApi;
 
-include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
-include_once($phpbb_root_path . 'includes/functions_privmsgs.' . $phpEx);
+
 
 class privmsg
 {
@@ -49,7 +48,10 @@ class privmsg
 
 	function __construct()
 	{
+		global $phpbb_root_path, $phpEx;
 
+		include_once($phpbb_root_path . 'includes/functions_content.' . $phpEx);
+		include_once($phpbb_root_path . 'includes/functions_privmsgs.' . $phpEx);
 	}
 
 	/**
