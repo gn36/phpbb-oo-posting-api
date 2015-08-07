@@ -342,7 +342,6 @@ class post extends posting_base
 		// Re-Read topic_id and post_id:
 		$this->topic_id = $post_data['topic_id'];
 		$this->post_id  = $post_data['post_id'];
-		echo "ich bin richtig!!!";
 
 		//TODO
 		foreach($this->attachments as $attachment)
