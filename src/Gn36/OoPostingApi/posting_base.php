@@ -422,9 +422,9 @@ class posting_base
 					'topic_last_post_id' => $data['post_id'],
 					'topic_last_post_time' => $current_time,
 					'topic_last_poster_id' => $sql_data[POSTS_TABLE]['sql']['poster_id'],
-					'topic_last_poster_name' =>  (! $userdata['user_id'] != ANONYMOUS && $username) ? $username : (($userdata['user_id'] != ANONYMOUS) ? $userdata['username'] : ''),
+					'topic_last_poster_name'	=> ($userdata['user_id'] == ANONYMOUS) ? $sql_data[POSTS_TABLE]['sql']['post_username'] : $userdata['username'],
 					'topic_last_poster_colour' => $userdata['user_colour'],
-					'topic_last_post_subject' => (string) $subject
+					'topic_last_post_subject'	=> (string) $subject,
 				);
 			}
 
@@ -446,8 +446,8 @@ class posting_base
 				$sql_data[FORUMS_TABLE]['stat'][] = 'forum_last_post_id = ' . $data['post_id'];
 				$sql_data[FORUMS_TABLE]['stat'][] = "forum_last_post_subject = '" . $db->sql_escape($subject) . "'";
 				$sql_data[FORUMS_TABLE]['stat'][] = 'forum_last_post_time = ' . $current_time;
-				$sql_data[FORUMS_TABLE]['stat'][] = 'forum_last_poster_id = ' . ((isset($data['poster_id']) && $data['poster_id']) ? $data['poster_id'] : (int) $userdata['user_id']);
-				$sql_data[FORUMS_TABLE]['stat'][] = "forum_last_poster_name = '" . ($userdata['user_id'] == ANONYMOUS ? $username : $userdata['username']) . "'";
+				$sql_data[FORUMS_TABLE]['stat'][] = 'forum_last_poster_id = ' . (int) $userdata['user_id'];
+				$sql_data[FORUMS_TABLE]['stat'][] = "forum_last_poster_name = '" . $db->sql_escape((!$userdata['is_registered'] && $username) ? $username : (($userdata['user_id'] != ANONYMOUS) ? $userdata['username'] : '')) . "'";
 				$sql_data[FORUMS_TABLE]['stat'][] = "forum_last_poster_colour = '" . $db->sql_escape($userdata['user_colour']) . "'";
 			}
 
@@ -714,7 +714,7 @@ class posting_base
 		{
 			$sql = 'DELETE FROM ' . DRAFTS_TABLE . "
 								WHERE draft_id = $draft_id
-								AND user_id = {$user->data['user_id']}";
+			AND user_id = {$userdata['user_id']}";
 			$db->sql_query($sql);
 		}
 
