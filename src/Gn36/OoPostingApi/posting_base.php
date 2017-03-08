@@ -220,7 +220,7 @@ class posting_base
 					'enable_smilies' => $data['enable_smilies'],
 					'enable_magic_url' => $data['enable_urls'],
 					'enable_sig' => $data['enable_sig'],
-					'post_username' => ($username && $data['poster_id'] == ANONYMOUS) ? $username : '',
+					'post_username' => ($username ? $username : ''),
 					'post_subject' => $subject,
 					'post_checksum' => $data['message_md5'],
 					'post_attachment' => (! empty($data['attachment_data'])) ? 1 : 0,
@@ -805,6 +805,7 @@ class posting_base
 		// Send Notifications
 		$notification_data = array_merge($data, array(
 			'topic_title' => (isset($data['topic_title'])) ? $data['topic_title'] : $subject,
+			'forum_name' => (isset($data['forum_name']) ? $data['forum_name'] : ''),
 			'post_username' => $username,
 			'poster_id' => $poster_id,
 			'post_text' => $data['message'],

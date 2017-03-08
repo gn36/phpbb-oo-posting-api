@@ -232,6 +232,21 @@ class post extends posting_base
 
 		$this->post_subject = truncate_string($this->post_subject);
 
+		if (!$this->post_username && $this->poster_id != ANONYMOUS)
+		{
+			if ($this->poster_id == $user->data['user_id'])
+			{
+				$this->post_username = $user->data['username'];
+			}
+			else
+			{
+				// Username is not known, fetch it
+				$sql = 'SELECT username FROM ' . USERS_TABLE . ' WHERE user_id = ' . (int) $this->poster_id;
+				$result = $db->sql_query($sql);
+				$username = $db->sql_fetchfield('username', false, $result);
+				$this->post_username = ($username ? $username : '');
+			}
+		}
 
 		$sql_data = array(
 			'poster_id' 		=> $this->poster_id,
